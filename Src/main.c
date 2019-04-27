@@ -293,7 +293,7 @@ static void MX_TIM17_Init(void)
 
   /* USER CODE END TIM17_Init 1 */
   htim17.Instance = TIM17;
-  htim17.Init.Prescaler = 4799;
+  htim17.Init.Prescaler = 479;
   htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim17.Init.Period = 1000;
   htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -417,15 +417,13 @@ void StartTask02(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-		//printf("Hello World from RTOS Interrupt Routine\r");
-
 	  //HAL_UART_Transmit(&huart2, (uint8_t*)"Hello RTOS\r", 12,10);
 
 
-	  if(comPeriod<100){
+	  if(comPeriod<50){
 		  dirPeriod=1;
 	  }
-	  if(comPeriod>500){
+	  if(comPeriod>51){
 		  dirPeriod=0;
 	  }
 	  if(dirPeriod==1){
@@ -435,9 +433,7 @@ void StartTask02(void const * argument)
 		  comPeriod=comPeriod-1;
 
 	  }
-	  	  //char lol[32];
-	  	  //sprintf(lol, "lol %u \r", (unsigned int)comPeriod);
-	  	  //HAL_UART_Transmit(&huart2, (uint8_t*)lol, strlen(lol),5);
+	  htim17.Instance->ARR=comPeriod;
 
 	HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
     osDelay(10);
@@ -465,7 +461,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 1 */
   if (htim->Instance == TIM17) {
 	  //HAL_UART_Transmit(&huart2, (uint8_t*)"Hello World\r", 13,10);
-	  htim17.Instance->ARR=comPeriod;
 
 	  //char lol[32];
 	  //sprintf(lol, "lol %u \r", (unsigned int)10);
@@ -476,38 +471,38 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	  switch(step){
 	  case 1:
-		  HAL_UART_Transmit(&huart2, (uint8_t*)"step1\r", 7,10);
+		  //HAL_UART_Transmit(&huart2, (uint8_t*)"step1\r", 7,10);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,200);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,1);
 		  break;
 
 	  case 2:
-		  HAL_UART_Transmit(&huart2, (uint8_t*)"step2\r", 7,10);
+		  //HAL_UART_Transmit(&huart2, (uint8_t*)"step2\r", 7,10);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,200);
 		  break;
 	  case 3:
-		  HAL_UART_Transmit(&huart2, (uint8_t*)"step3\r", 7,10);
+		 // HAL_UART_Transmit(&huart2, (uint8_t*)"step3\r", 7,10);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,100);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,1);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,200);
 		  		  break;
 	  case 4:
-		  HAL_UART_Transmit(&huart2, (uint8_t*)"step4\r", 7,10);
+		  //HAL_UART_Transmit(&huart2, (uint8_t*)"step4\r", 7,10);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,100);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,200);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,1);
 		  		  break;
 	  case 5:
-		  HAL_UART_Transmit(&huart2, (uint8_t*)"step5\r", 7,10);
+		  //HAL_UART_Transmit(&huart2, (uint8_t*)"step5\r", 7,10);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,200);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,100);
 		  		  break;
 	  case 6:
-		  HAL_UART_Transmit(&huart2, (uint8_t*)"step6\r", 7,10);
+		  //HAL_UART_Transmit(&huart2, (uint8_t*)"step6\r", 7,10);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,200);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,1);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,100);
