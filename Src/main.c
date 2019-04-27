@@ -349,7 +349,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim->Instance == TIM17) {
 	  HAL_UART_Transmit(&huart2, (uint8_t*)"Hello World\r", 13,10);
 
-	  printf("Hello World from Timer17 Interrupt Routine\r");
+	  char lol[32];
+	  sprintf(lol, "lol %u \r", (unsigned int)10);
+	  HAL_UART_Transmit(&huart2, (uint8_t*)lol, strlen(lol),5);
 
 	  //HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
   }
