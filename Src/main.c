@@ -109,6 +109,19 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 HAL_TIM_Base_Start_IT(&htim17);
+
+HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
+HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
+HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_3);
+HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
+__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,5);
+__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,5);
+__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,5);
+
+
+
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -280,12 +293,12 @@ static void MX_TIM17_Init(void)
 
   /* USER CODE END TIM17_Init 1 */
   htim17.Instance = TIM17;
-  htim17.Init.Prescaler = 47999;
+  htim17.Init.Prescaler = 4799;
   htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim17.Init.Period = 1000;
   htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim17.Init.RepetitionCounter = 0;
-  htim17.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim17.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim17) != HAL_OK)
   {
     Error_Handler();
@@ -367,7 +380,10 @@ static void MX_GPIO_Init(void)
   * @param  argument: Not used 
   * @retval None
   */
+int tempARR=0;
 /* USER CODE END Header_StartDefaultTask */
+
+
 void StartDefaultTask(void const * argument)
 {
 
@@ -375,7 +391,12 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	   tempARR=htim17.Instance->ARR;
+	  char lol[32];
+
+	  	  	  	  sprintf(lol, "ARR= %u \r", (unsigned int)tempARR);
+	  	  	  	  HAL_UART_Transmit(&huart2, (uint8_t*)lol, strlen(lol),5);
+    osDelay(1000);
   }
   /* USER CODE END 5 */ 
 }
@@ -386,6 +407,8 @@ void StartDefaultTask(void const * argument)
 * @param argument: Not used
 * @retval None
 */
+static uint16_t comPeriod=200;
+static int dirPeriod=0;
 /* USER CODE END Header_StartTask02 */
 void StartTask02(void const * argument)
 {
@@ -396,10 +419,28 @@ void StartTask02(void const * argument)
   {
 		//printf("Hello World from RTOS Interrupt Routine\r");
 
-	  HAL_UART_Transmit(&huart2, (uint8_t*)"Hello RTOS\r", 12,10);
+	  //HAL_UART_Transmit(&huart2, (uint8_t*)"Hello RTOS\r", 12,10);
+
+
+	  if(comPeriod<100){
+		  dirPeriod=1;
+	  }
+	  if(comPeriod>500){
+		  dirPeriod=0;
+	  }
+	  if(dirPeriod==1){
+		  comPeriod=comPeriod+1;
+	  }
+	  if(dirPeriod==0){
+		  comPeriod=comPeriod-1;
+
+	  }
+	  	  //char lol[32];
+	  	  //sprintf(lol, "lol %u \r", (unsigned int)comPeriod);
+	  	  //HAL_UART_Transmit(&huart2, (uint8_t*)lol, strlen(lol),5);
 
 	HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
-    osDelay(1000);
+    osDelay(10);
   }
   /* USER CODE END StartTask02 */
 }
@@ -412,6 +453,7 @@ void StartTask02(void const * argument)
   * @param  htim : TIM handle
   * @retval None
   */
+static int step=1;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
@@ -422,13 +464,68 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
   /* USER CODE BEGIN Callback 1 */
   if (htim->Instance == TIM17) {
-	  HAL_UART_Transmit(&huart2, (uint8_t*)"Hello World\r", 13,10);
+	  //HAL_UART_Transmit(&huart2, (uint8_t*)"Hello World\r", 13,10);
+	  htim17.Instance->ARR=comPeriod;
 
+	  //char lol[32];
+	  //sprintf(lol, "lol %u \r", (unsigned int)10);
+	  //HAL_UART_Transmit(&huart2, (uint8_t*)lol, strlen(lol),5);
+
+	  //This is where we put the switch statement for commuting the BLDC
+
+
+	  switch(step){
+	  case 1:
+		  HAL_UART_Transmit(&huart2, (uint8_t*)"step1\r", 7,10);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,200);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,1);
+		  break;
+
+	  case 2:
+		  HAL_UART_Transmit(&huart2, (uint8_t*)"step2\r", 7,10);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,200);
+		  break;
+	  case 3:
+		  HAL_UART_Transmit(&huart2, (uint8_t*)"step3\r", 7,10);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,100);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,1);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,200);
+		  		  break;
+	  case 4:
+		  HAL_UART_Transmit(&huart2, (uint8_t*)"step4\r", 7,10);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,100);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,200);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,1);
+		  		  break;
+	  case 5:
+		  HAL_UART_Transmit(&huart2, (uint8_t*)"step5\r", 7,10);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,200);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,100);
+		  		  break;
+	  case 6:
+		  HAL_UART_Transmit(&huart2, (uint8_t*)"step6\r", 7,10);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,200);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,1);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,100);
+		  		  break;
+	  default:
+		  HAL_UART_Transmit(&huart2, (uint8_t*)"shit\r", 7,10);
+
+
+	  }
+	  step = step+1;
+	  if(step>6){step=1;}
 	  char lol[32];
-	  sprintf(lol, "lol %u \r", (unsigned int)10);
-	  HAL_UART_Transmit(&huart2, (uint8_t*)lol, strlen(lol),5);
+	  //int tempARR=htim17.Instance->ARR;
 
-	  //HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
+	  	  	  //sprintf(lol, "ARR= %u \r", (unsigned int)tempARR);
+	  	  	  //HAL_UART_Transmit(&huart2, (uint8_t*)lol, strlen(lol),5);
+
+	  HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
   }
   /* USER CODE END Callback 1 */
 }
