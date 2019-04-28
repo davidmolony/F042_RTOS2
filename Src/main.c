@@ -361,6 +361,12 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin : PA11 */
+  GPIO_InitStruct.Pin = GPIO_PIN_11;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pin : LD3_Pin */
   GPIO_InitStruct.Pin = LD3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -368,9 +374,31 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD3_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PB4 PB5 PB6 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 3, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
+
 }
 
 /* USER CODE BEGIN 4 */
+static int step=1;
+uint32_t tmpccmrx = 0;
+int hallStep =0;
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
+hallStep = HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_4)|(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_5)<<1)|(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_11)<<2);
+//HAL_UART_Transmit(&huart2,(uint8_t) hallStep,2,5);
+char lol[32];
+sprintf(lol, "lol %u \r", (unsigned int)hallStep);
+HAL_UART_Transmit(&huart2, (uint8_t*)lol, strlen(lol),5);
+}
 
 /* USER CODE END 4 */
 
@@ -382,8 +410,6 @@ static void MX_GPIO_Init(void)
   */
 int tempARR=0;
 /* USER CODE END Header_StartDefaultTask */
-
-
 void StartDefaultTask(void const * argument)
 {
 
@@ -449,8 +475,6 @@ void StartTask02(void const * argument)
   * @param  htim : TIM handle
   * @retval None
   */
-static int step=1;
-uint32_t tmpccmrx = 0;
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
@@ -478,13 +502,29 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
 		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,1);
 		  //Add in the code that turns the channel on
-          tmpccmrx = htim1.Instance->CCMR2;
+		  	tmpccmrx = htim1.Instance->CCMR2;
             tmpccmrx &= ~TIM_CCMR2_OC3M;
             tmpccmrx &= ~TIM_CCMR2_CC3S;
             tmpccmrx |= TIM_OCMODE_PWM1;
 htim1.Instance->CCMR2 = tmpccmrx;
 htim1.Instance->CCER |= TIM_CCER_CC3E;   //enable
 htim1.Instance->CCER |= TIM_CCER_CC3NE;   //enable
+
+			tmpccmrx = htim1.Instance->CCMR1;
+			tmpccmrx &= ~TIM_CCMR1_OC2M;
+			tmpccmrx &= ~TIM_CCMR1_CC2S;
+			tmpccmrx |= TIM_OCMODE_PWM1<<8;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC2E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC2NE;   //enable
+
+			tmpccmrx = htim1.Instance->CCMR1;
+			tmpccmrx &= ~TIM_CCMR1_OC1M;
+			tmpccmrx &= ~TIM_CCMR1_CC1S;
+			tmpccmrx |= TIM_OCMODE_PWM1;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC1E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC1NE;   //enable
 
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,100);
 		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,150);
@@ -498,13 +538,30 @@ htim1.Instance->CCER |= TIM_CCER_CC3NE;   //enable
 		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
 		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,200);
 		  //Add in the code that shuts the channel off
-		                  tmpccmrx = htim1.Instance->CCMR2;
-		                   tmpccmrx &= ~TIM_CCMR2_OC3M;
-		                   tmpccmrx &= ~TIM_CCMR2_CC3S;
-		                   tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE;
-		htim1.Instance->CCMR2 = tmpccmrx;
-		htim1.Instance->CCER &= ~TIM_CCER_CC3E;  //disable
-		htim1.Instance->CCER &= ~TIM_CCER_CC3NE;  //disable
+			   tmpccmrx = htim1.Instance->CCMR2;
+			   tmpccmrx &= ~TIM_CCMR2_OC3M;
+			   tmpccmrx &= ~TIM_CCMR2_CC3S;
+			   tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE;
+htim1.Instance->CCMR2 = tmpccmrx;
+htim1.Instance->CCER &= ~TIM_CCER_CC3E;  //disable
+htim1.Instance->CCER &= ~TIM_CCER_CC3NE;  //disable
+
+				tmpccmrx = htim1.Instance->CCMR1;
+				tmpccmrx &= ~TIM_CCMR1_OC2M;
+				tmpccmrx &= ~TIM_CCMR1_CC2S;
+				tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE<<8;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER &= ~TIM_CCER_CC2E;  //disable
+htim1.Instance->CCER &= ~TIM_CCER_CC2NE;  //disable
+
+				tmpccmrx = htim1.Instance->CCMR1;
+				tmpccmrx &= ~TIM_CCMR1_OC1M;
+				tmpccmrx &= ~TIM_CCMR1_CC1S;
+				tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER &= ~TIM_CCER_CC1E;  //disable
+htim1.Instance->CCER &= ~TIM_CCER_CC1NE;  //disable
+
 
 
 		  break;
