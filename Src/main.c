@@ -435,7 +435,7 @@ void StartTask02(void const * argument)
 	  }
 	  htim17.Instance->ARR=comPeriod;
 
-	HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
+	//HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
     osDelay(10);
   }
   /* USER CODE END StartTask02 */
@@ -450,6 +450,8 @@ void StartTask02(void const * argument)
   * @retval None
   */
 static int step=1;
+uint32_t tmpccmrx = 0;
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
@@ -472,16 +474,39 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  switch(step){
 	  case 1:
 		  //HAL_UART_Transmit(&huart2, (uint8_t*)"step1\r", 7,10);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,200);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,1);
+		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,200);
+		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
+		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,1);
+		  //Add in the code that turns the channel on
+          tmpccmrx = htim1.Instance->CCMR2;
+            tmpccmrx &= ~TIM_CCMR2_OC3M;
+            tmpccmrx &= ~TIM_CCMR2_CC3S;
+            tmpccmrx |= TIM_OCMODE_PWM1;
+htim1.Instance->CCMR2 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC3E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC3NE;   //enable
+
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,100);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,150);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,200);//D0, D6
+
 		  break;
 
 	  case 2:
 		  //HAL_UART_Transmit(&huart2, (uint8_t*)"step2\r", 7,10);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,200);
+		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1);
+		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
+		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,200);
+		  //Add in the code that shuts the channel off
+		                  tmpccmrx = htim1.Instance->CCMR2;
+		                   tmpccmrx &= ~TIM_CCMR2_OC3M;
+		                   tmpccmrx &= ~TIM_CCMR2_CC3S;
+		                   tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE;
+		htim1.Instance->CCMR2 = tmpccmrx;
+		htim1.Instance->CCER &= ~TIM_CCER_CC3E;  //disable
+		htim1.Instance->CCER &= ~TIM_CCER_CC3NE;  //disable
+
+
 		  break;
 	  case 3:
 		 // HAL_UART_Transmit(&huart2, (uint8_t*)"step3\r", 7,10);
@@ -513,10 +538,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	  }
 	  step = step+1;
-	  if(step>6){step=1;}
-	  char lol[32];
-	  //int tempARR=htim17.Instance->ARR;
+	  if(step>2){step=1;}
 
+	  //int tempARR=htim17.Instance->ARR;
 	  	  	  //sprintf(lol, "ARR= %u \r", (unsigned int)tempARR);
 	  	  	  //HAL_UART_Transmit(&huart2, (uint8_t*)lol, strlen(lol),5);
 
