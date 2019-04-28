@@ -51,6 +51,8 @@ UART_HandleTypeDef huart2;
 osThreadId defaultTaskHandle;
 osThreadId helloWorldHandle;
 /* USER CODE BEGIN PV */
+uint16_t PWMHigh = 100;
+uint16_t PWMLow = 0;
 
 /* USER CODE END PV */
 
@@ -390,6 +392,7 @@ static void MX_GPIO_Init(void)
 static int step=1;
 uint32_t tmpccmrx = 0;
 int hallStep =0;
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
@@ -493,30 +496,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  //HAL_UART_Transmit(&huart2, (uint8_t*)lol, strlen(lol),5);
 
 	  //This is where we put the switch statement for commuting the BLDC
-
-
 	  switch(step){
 	  case 1:
-		  //HAL_UART_Transmit(&huart2, (uint8_t*)"step1\r", 7,10);
-		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,200);
-		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
-		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,1);
-		  //Add in the code that turns the channel on
-		  	tmpccmrx = htim1.Instance->CCMR2;
-            tmpccmrx &= ~TIM_CCMR2_OC3M;
-            tmpccmrx &= ~TIM_CCMR2_CC3S;
-            tmpccmrx |= TIM_OCMODE_PWM1;
-htim1.Instance->CCMR2 = tmpccmrx;
-htim1.Instance->CCER |= TIM_CCER_CC3E;   //enable
-htim1.Instance->CCER |= TIM_CCER_CC3NE;   //enable
-
 			tmpccmrx = htim1.Instance->CCMR1;
 			tmpccmrx &= ~TIM_CCMR1_OC2M;
 			tmpccmrx &= ~TIM_CCMR1_CC2S;
-			tmpccmrx |= TIM_OCMODE_PWM1<<8;
+			tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE<<8;
 htim1.Instance->CCMR1 = tmpccmrx;
-htim1.Instance->CCER |= TIM_CCER_CC2E;   //enable
-htim1.Instance->CCER |= TIM_CCER_CC2NE;   //enable
+htim1.Instance->CCER &= ~TIM_CCER_CC2E;  //disable
+htim1.Instance->CCER &= ~TIM_CCER_CC2NE;  //disable
+
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,PWMHigh);
+		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,PWMLow);
 
 			tmpccmrx = htim1.Instance->CCMR1;
 			tmpccmrx &= ~TIM_CCMR1_OC1M;
@@ -525,69 +517,153 @@ htim1.Instance->CCER |= TIM_CCER_CC2NE;   //enable
 htim1.Instance->CCMR1 = tmpccmrx;
 htim1.Instance->CCER |= TIM_CCER_CC1E;   //enable
 htim1.Instance->CCER |= TIM_CCER_CC1NE;   //enable
-
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,100);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,150);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,200);//D0, D6
-
-		  break;
-
+		  	tmpccmrx = htim1.Instance->CCMR2;
+            tmpccmrx &= ~TIM_CCMR2_OC3M;
+            tmpccmrx &= ~TIM_CCMR2_CC3S;
+            tmpccmrx |= TIM_OCMODE_PWM1;
+htim1.Instance->CCMR2 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC3E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC3NE;   //enable
+		  	  	  break;
 	  case 2:
-		  //HAL_UART_Transmit(&huart2, (uint8_t*)"step2\r", 7,10);
-		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1);
-		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,100);
-		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,200);
-		  //Add in the code that shuts the channel off
-			   tmpccmrx = htim1.Instance->CCMR2;
-			   tmpccmrx &= ~TIM_CCMR2_OC3M;
-			   tmpccmrx &= ~TIM_CCMR2_CC3S;
-			   tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE;
+		   tmpccmrx = htim1.Instance->CCMR2;
+		   tmpccmrx &= ~TIM_CCMR2_OC3M;
+		   tmpccmrx &= ~TIM_CCMR2_CC3S;
+		   tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE;
 htim1.Instance->CCMR2 = tmpccmrx;
 htim1.Instance->CCER &= ~TIM_CCER_CC3E;  //disable
 htim1.Instance->CCER &= ~TIM_CCER_CC3NE;  //disable
 
-				tmpccmrx = htim1.Instance->CCMR1;
-				tmpccmrx &= ~TIM_CCMR1_OC2M;
-				tmpccmrx &= ~TIM_CCMR1_CC2S;
-				tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE<<8;
-htim1.Instance->CCMR1 = tmpccmrx;
-htim1.Instance->CCER &= ~TIM_CCER_CC2E;  //disable
-htim1.Instance->CCER &= ~TIM_CCER_CC2NE;  //disable
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,PWMHigh);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,PWMLow);
+		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,200);
 
-				tmpccmrx = htim1.Instance->CCMR1;
-				tmpccmrx &= ~TIM_CCMR1_OC1M;
-				tmpccmrx &= ~TIM_CCMR1_CC1S;
-				tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE;
+			tmpccmrx = htim1.Instance->CCMR1;
+			tmpccmrx &= ~TIM_CCMR1_OC1M;
+			tmpccmrx &= ~TIM_CCMR1_CC1S;
+			tmpccmrx |= TIM_OCMODE_PWM1;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC1E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC1NE;   //enable
+			tmpccmrx = htim1.Instance->CCMR1;
+			tmpccmrx &= ~TIM_CCMR1_OC2M;
+			tmpccmrx &= ~TIM_CCMR1_CC2S;
+			tmpccmrx |= TIM_OCMODE_PWM1<<8;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC2E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC2NE;   //enable
+		  	  	  break;
+	  case 3:
+			tmpccmrx = htim1.Instance->CCMR1;
+			tmpccmrx &= ~TIM_CCMR1_OC1M;
+			tmpccmrx &= ~TIM_CCMR1_CC1S;
+			tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE;
 htim1.Instance->CCMR1 = tmpccmrx;
 htim1.Instance->CCER &= ~TIM_CCER_CC1E;  //disable
 htim1.Instance->CCER &= ~TIM_CCER_CC1NE;  //disable
 
+		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,100);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,PWMLow);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,PWMHigh);
 
-
-		  break;
-	  case 3:
-		 // HAL_UART_Transmit(&huart2, (uint8_t*)"step3\r", 7,10);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,100);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,1);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,200);
+			tmpccmrx = htim1.Instance->CCMR1;
+			tmpccmrx &= ~TIM_CCMR1_OC2M;
+			tmpccmrx &= ~TIM_CCMR1_CC2S;
+			tmpccmrx |= TIM_OCMODE_PWM1<<8;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC2E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC2NE;   //enable
+			tmpccmrx = htim1.Instance->CCMR2;
+			tmpccmrx &= ~TIM_CCMR2_OC3M;
+			tmpccmrx &= ~TIM_CCMR2_CC3S;
+			tmpccmrx |= TIM_OCMODE_PWM1;
+htim1.Instance->CCMR2 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC3E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC3NE;   //enable
 		  		  break;
 	  case 4:
-		  //HAL_UART_Transmit(&huart2, (uint8_t*)"step4\r", 7,10);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,100);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,200);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,1);
+			tmpccmrx = htim1.Instance->CCMR1;
+			tmpccmrx &= ~TIM_CCMR1_OC2M;
+			tmpccmrx &= ~TIM_CCMR1_CC2S;
+			tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE<<8;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER &= ~TIM_CCER_CC2E;  //disable
+htim1.Instance->CCER &= ~TIM_CCER_CC2NE;  //disable
+
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,PWMLow);
+		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,200);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,PWMHigh);
+
+			tmpccmrx = htim1.Instance->CCMR1;
+			tmpccmrx &= ~TIM_CCMR1_OC1M;
+			tmpccmrx &= ~TIM_CCMR1_CC1S;
+			tmpccmrx |= TIM_OCMODE_PWM1;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC1E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC1NE;   //enable
+			tmpccmrx = htim1.Instance->CCMR2;
+			tmpccmrx &= ~TIM_CCMR2_OC3M;
+			tmpccmrx &= ~TIM_CCMR2_CC3S;
+			tmpccmrx |= TIM_OCMODE_PWM1;
+htim1.Instance->CCMR2 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC3E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC3NE;   //enable
 		  		  break;
 	  case 5:
-		  //HAL_UART_Transmit(&huart2, (uint8_t*)"step5\r", 7,10);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,200);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,100);
+		   tmpccmrx = htim1.Instance->CCMR2;
+		   tmpccmrx &= ~TIM_CCMR2_OC3M;
+		   tmpccmrx &= ~TIM_CCMR2_CC3S;
+		   tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE;
+htim1.Instance->CCMR2 = tmpccmrx;
+htim1.Instance->CCER &= ~TIM_CCER_CC3E;  //disable
+htim1.Instance->CCER &= ~TIM_CCER_CC3NE;  //disable
+
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,PWMLow);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,PWMHigh);
+		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,100);
+
+			tmpccmrx = htim1.Instance->CCMR1;
+			tmpccmrx &= ~TIM_CCMR1_OC1M;
+			tmpccmrx &= ~TIM_CCMR1_CC1S;
+			tmpccmrx |= TIM_OCMODE_PWM1;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC1E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC1NE;   //enable
+			tmpccmrx = htim1.Instance->CCMR1;
+			tmpccmrx &= ~TIM_CCMR1_OC2M;
+			tmpccmrx &= ~TIM_CCMR1_CC2S;
+			tmpccmrx |= TIM_OCMODE_PWM1<<8;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC2E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC2NE;   //enable
 		  		  break;
 	  case 6:
-		  //HAL_UART_Transmit(&huart2, (uint8_t*)"step6\r", 7,10);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,200);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,1);
-		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,100);
+			tmpccmrx = htim1.Instance->CCMR1;
+			tmpccmrx &= ~TIM_CCMR1_OC1M;
+			tmpccmrx &= ~TIM_CCMR1_CC1S;
+			tmpccmrx |= TIM_OCMODE_FORCED_INACTIVE;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER &= ~TIM_CCER_CC1E;  //disable
+htim1.Instance->CCER &= ~TIM_CCER_CC1NE;  //disable
+
+		  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,200);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,PWMHigh);
+		  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,PWMLow);
+
+			tmpccmrx = htim1.Instance->CCMR1;
+			tmpccmrx &= ~TIM_CCMR1_OC2M;
+			tmpccmrx &= ~TIM_CCMR1_CC2S;
+			tmpccmrx |= TIM_OCMODE_PWM1<<8;
+htim1.Instance->CCMR1 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC2E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC2NE;   //enable
+			tmpccmrx = htim1.Instance->CCMR2;
+			tmpccmrx &= ~TIM_CCMR2_OC3M;
+			tmpccmrx &= ~TIM_CCMR2_CC3S;
+			tmpccmrx |= TIM_OCMODE_PWM1;
+htim1.Instance->CCMR2 = tmpccmrx;
+htim1.Instance->CCER |= TIM_CCER_CC3E;   //enable
+htim1.Instance->CCER |= TIM_CCER_CC3NE;   //enable
 		  		  break;
 	  default:
 		  HAL_UART_Transmit(&huart2, (uint8_t*)"shit\r", 7,10);
@@ -595,7 +671,7 @@ htim1.Instance->CCER &= ~TIM_CCER_CC1NE;  //disable
 
 	  }
 	  step = step+1;
-	  if(step>2){step=1;}
+	  if(step>6){step=1;}
 
 	  //int tempARR=htim17.Instance->ARR;
 	  	  	  //sprintf(lol, "ARR= %u \r", (unsigned int)tempARR);
