@@ -437,6 +437,10 @@ void StartDefaultTask(void const * argument)
 * @retval None
 */
 static uint16_t comPeriod=200;
+static uint16_t comPeriod2=400;
+static uint16_t maxSpd=20;
+
+
 static int dirPeriod=0;
 /* USER CODE END Header_StartTask02 */
 void StartTask02(void const * argument)
@@ -462,7 +466,10 @@ void StartTask02(void const * argument)
 		  comPeriod=comPeriod-1;
 
 	  }
-	  htim17.Instance->ARR=comPeriod;
+	  if(comPeriod2>maxSpd){
+		  comPeriod2=comPeriod2*0.99;
+	  }
+	  htim17.Instance->ARR=comPeriod2;
 
 	//HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
     osDelay(10);
@@ -671,13 +678,14 @@ htim1.Instance->CCER |= TIM_CCER_CC3NE;   //enable
 
 	  }
 	  step = step+1;
-	  if(step>6){step=1;}
+	  if(step>6){step=1;
+	  HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
+}
 
 	  //int tempARR=htim17.Instance->ARR;
 	  	  	  //sprintf(lol, "ARR= %u \r", (unsigned int)tempARR);
 	  	  	  //HAL_UART_Transmit(&huart2, (uint8_t*)lol, strlen(lol),5);
 
-	  HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
   }
   /* USER CODE END Callback 1 */
 }
